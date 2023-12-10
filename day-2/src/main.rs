@@ -12,8 +12,7 @@ const GREEN_CUBE_LIMIT: u8 = 13;
 const BLUE_CUBE_LIMIT: u8 = 14;
 
 fn read_input_file() -> String {
-    let contents = std::fs::read_to_string("src/input.txt").expect("Failed to read input file");
-    return contents;
+    std::fs::read_to_string("src/input.txt").expect("Failed to read input file")
 }
 
 fn filter_possible_games(
@@ -33,7 +32,7 @@ fn filter_possible_games(
             let game_id = game_id_and_rounds
                 .first()
                 .unwrap()
-                .split(" ")
+                .split(' ')
                 .last()
                 .unwrap();
             let rounds: Vec<&str> = game_id_and_rounds.last().unwrap().split("; ").collect();
@@ -50,11 +49,11 @@ fn filter_possible_games(
                 {
                     return true;
                 }
-                return false;
+                false
             }) {
                 return None;
             }
-            return Some(game_id.parse::<u16>().unwrap());
+            Some(game_id.parse::<u16>().unwrap())
         })
         .collect();
 }
@@ -79,30 +78,30 @@ fn calculate_power_of_game(game: &str) -> u16 {
         .map(|c| c[1].parse::<u8>().unwrap())
         .max()
         .unwrap_or(0u8);
-    return max_number_of_red_cubes as u16
+    max_number_of_red_cubes as u16
         * max_number_of_green_cubes as u16
-        * max_number_of_blue_cubes as u16;
+        * max_number_of_blue_cubes as u16
 }
 
 fn sum_power_of_games(games: &str) -> u32 {
     let power_of_each_game = games
         .lines()
         .filter(|line| !line.trim().is_empty())
-        .map(|line| calculate_power_of_game(line))
+        .map(calculate_power_of_game)
         .collect::<Vec<_>>();
     return power_of_each_game.iter().map(|x| *x as u32).sum();
 }
 
 fn main() {
-    // println!(
-    //     "{}",
-    //     sum_id_of_possible_games(filter_possible_games(
-    //         &read_input_file(),
-    //         RED_CUBE_LIMIT,
-    //         GREEN_CUBE_LIMIT,
-    //         BLUE_CUBE_LIMIT
-    //     ))
-    // );
+    println!(
+        "{}",
+        sum_id_of_possible_games(filter_possible_games(
+            &read_input_file(),
+            RED_CUBE_LIMIT,
+            GREEN_CUBE_LIMIT,
+            BLUE_CUBE_LIMIT
+        ))
+    );
     println!("{}", sum_power_of_games(&read_input_file()));
 }
 
