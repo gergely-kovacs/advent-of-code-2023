@@ -6,14 +6,13 @@ const NUMBERS: [&str; 9] = [
 ];
 
 fn read_file(path: &str) -> String {
-    let contents = std::fs::read_to_string(path).expect("Something went wrong reading the file");
-    return contents;
+    std::fs::read_to_string(path).expect("Something went wrong reading the file")
 }
 
 fn sum_first_and_last_digit(line: &str) -> u32 {
     let digits = line
         .chars()
-        .filter(|c| c.to_digit(10).is_some())
+        .filter(|c| c.is_ascii_digit())
         .collect::<Vec<char>>();
     match digits.len() {
         0 => 0,
@@ -30,7 +29,7 @@ fn does_contain_number_as_text(substring_of_line: &str) -> bool {
             return true;
         }
     }
-    return false;
+    false
 }
 
 fn replace_numbers_as_text_in_substring_of_line(text: &str) -> String {
@@ -49,13 +48,10 @@ fn replace_numbers_as_text_in_substring_of_line(text: &str) -> String {
     ]);
 
     let replaced_text = numbers_as_text_regex.replace_all(text, |caps: &regex::Captures| {
-        number_mapping
-            .get(&caps[0])
-            .map(|value| *value)
-            .unwrap_or_default()
+        number_mapping.get(&caps[0]).copied().unwrap_or_default()
     });
 
-    return replaced_text.to_string();
+    replaced_text.to_string()
 }
 
 fn convert_number_as_text_to_number_as_string(line: &str) -> String {
@@ -69,14 +65,14 @@ fn convert_number_as_text_to_number_as_string(line: &str) -> String {
         let substring_of_line = &line_with_parsed_numbers[..cursor_position];
         if does_contain_number_as_text(substring_of_line) {
             line_with_parsed_numbers = line_with_parsed_numbers.replace(
-                &substring_of_line,
-                replace_numbers_as_text_in_substring_of_line(&substring_of_line).as_str(),
+                substring_of_line,
+                replace_numbers_as_text_in_substring_of_line(substring_of_line).as_str(),
             );
             return convert_number_as_text_to_number_as_string(&line_with_parsed_numbers);
         }
     }
 
-    return line_with_parsed_numbers;
+    line_with_parsed_numbers
 }
 
 fn sum_all_the_lines(input_data: &str) -> u32 {
@@ -85,7 +81,7 @@ fn sum_all_the_lines(input_data: &str) -> u32 {
         let line_with_parsed_numbers = convert_number_as_text_to_number_as_string(line);
         sum += sum_first_and_last_digit(&line_with_parsed_numbers);
     }
-    return sum;
+    sum
 }
 
 fn main() {
