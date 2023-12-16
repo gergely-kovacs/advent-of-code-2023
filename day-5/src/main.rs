@@ -66,6 +66,9 @@ fn get_section_from_almanac(almanac: &str, section_name: AlmanacMapType) -> Stri
         if let Some(end_index) = section_trimmed_start.find(section_end) {
             return section_trimmed_start[..end_index].trim().to_string();
         }
+        if section_name == AlmanacMapType::HumidityToLocation {
+            return section_trimmed_start.trim().to_string();
+        }
     }
     "".to_string()
 }
@@ -89,7 +92,7 @@ fn map_section_to_almanac_ranges(almanac_section: &str) -> Vec<AlmanacMapRange> 
         .collect()
 }
 
-fn map_number_according_to_map(number: u64, map: &Vec<AlmanacMapRange>) -> u64 {
+fn map_number_according_to_map(number: u64, map: &[AlmanacMapRange]) -> u64 {
     let active_range = map.iter().find(|map_range| {
         number >= map_range.source_range_start
             && number < map_range.source_range_start + map_range.range_length
