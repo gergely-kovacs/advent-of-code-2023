@@ -22,7 +22,7 @@ fn sum_part_numbers(input: &str) -> u32 {
         .lines()
         .filter(|line| !line.trim().is_empty())
         .enumerate()
-        .fold(0u32, |mut sum_of_part_numbers: u32, (line_index, line)| {
+        .filter_map(|(line_index, line)| {
             let numbers_in_line = line.trim().chars().enumerate().fold(
                 Vec::new(),
                 |mut numbers: Vec<NumberInLine>, (character_index, c)| {
@@ -56,12 +56,12 @@ fn sum_part_numbers(input: &str) -> u32 {
             );
 
             if numbers_in_line.is_empty() {
-                return sum_of_part_numbers;
+                return None;
             }
 
             let symbol_indices_in_prev_line = input
                 .lines()
-                .nth(line_index)
+                .nth(line_index.checked_sub(1).unwrap_or_default())
                 .unwrap_or_default()
                 .chars()
                 .enumerate()
@@ -76,7 +76,7 @@ fn sum_part_numbers(input: &str) -> u32 {
 
             let symbol_indices_of_next_line = input
                 .lines()
-                .nth(line_index + 2)
+                .nth(line_index.checked_add(1).unwrap_or_default())
                 .unwrap_or_default()
                 .chars()
                 .enumerate()
@@ -91,10 +91,10 @@ fn sum_part_numbers(input: &str) -> u32 {
             .concat();
 
             if symbol_indices.is_empty() {
-                return sum_of_part_numbers;
+                return None;
             }
 
-            sum_of_part_numbers += numbers_in_line
+            let final_numbers_of_line: Vec<u32> = numbers_in_line
                 .iter()
                 .filter_map(|number_in_line| {
                     if symbol_indices.iter().any(|&symbol_index| {
@@ -112,15 +112,15 @@ fn sum_part_numbers(input: &str) -> u32 {
                     }
                     None
                 })
-                .sum::<u32>();
+                .collect();
 
-            sum_of_part_numbers
+            Some(final_numbers_of_line.iter().sum::<u32>())
         })
+        .sum()
 }
 
 fn main() {
     println!("Part 1: {}", sum_part_numbers(&read_input_file()));
-    // Part 1: 156554 is too low
 }
 
 #[cfg(test)]
@@ -129,8 +129,7 @@ mod tests {
 
     #[test]
     fn test_part_1() {
-        let input = "
-467..114..
+        let input = "467..114..
 ...*......
 ..35..633.
 ......#...
