@@ -36,16 +36,18 @@ fn calculate_number_of_steps_to_reach_destination(input: &str) -> usize {
     let starting_node = "AAA";
     let destination_node = "ZZZ";
     let mut current_node = starting_node;
-    let instructions = *input.split("\n\n").collect::<Vec<&str>>().first().unwrap();
-    let mut instructions_iter = instructions.chars().peekable();
+    let mut instructions = input
+        .split("\n\n")
+        .collect::<Vec<&str>>()
+        .first()
+        .unwrap()
+        .chars()
+        .cycle();
     let network = *input.split("\n\n").collect::<Vec<&str>>().last().unwrap();
     let nodes = parse_map(network);
     let mut steps_taken = 0;
     while current_node != destination_node {
-        if instructions_iter.peek().is_none() {
-            instructions_iter = instructions.chars().peekable();
-        }
-        let instruction = instructions_iter.next().unwrap();
+        let instruction = instructions.next().unwrap();
         current_node = get_next_node(current_node, instruction, &nodes);
         steps_taken += 1;
     }
