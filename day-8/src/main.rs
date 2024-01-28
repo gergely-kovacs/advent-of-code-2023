@@ -54,29 +54,56 @@ fn calculate_number_of_steps_to_reach_destination(input: &str) -> usize {
     steps_taken
 }
 
+fn lcm(nums: &[usize]) -> usize {
+    if nums.len() == 1 {
+        return nums[0];
+    }
+    let a = nums[0];
+    let b = lcm(&nums[1..]);
+    a * b / gcd_of_two_numbers(a, b)
+}
+
+fn gcd_of_two_numbers(a: usize, b: usize) -> usize {
+    if b == 0 {
+        return a;
+    }
+    gcd_of_two_numbers(b, a % b)
+}
+
 fn calculate_number_of_steps_to_reach_destination_parallel(input: &str) -> usize {
-    let instructions = *input.split("\n\n").collect::<Vec<&str>>().first().unwrap();
-    let mut instructions_iter = instructions.chars().peekable();
+    let mut instructions = input
+        .split("\n\n")
+        .collect::<Vec<&str>>()
+        .first()
+        .unwrap()
+        .chars()
+        .cycle();
     let network = *input.split("\n\n").collect::<Vec<&str>>().last().unwrap();
     let nodes = parse_map(network);
     let starting_nodes: HashSet<&str> =
         HashSet::from_iter(nodes.keys().cloned().filter(|x| x.ends_with('A')));
-    let destination_nodes: HashSet<&str> =
-        HashSet::from_iter(nodes.keys().cloned().filter(|x| x.ends_with('Z')));
-    let mut current_nodes = starting_nodes;
+    let mut current_nodes = starting_nodes.clone();
     let mut steps_taken = 0;
-    while !current_nodes.eq(&destination_nodes) {
-        if instructions_iter.peek().is_none() {
-            instructions_iter = instructions.chars().peekable();
-        }
-        let instruction = instructions_iter.next().unwrap();
+    let mut reached_destinations_with_step_count: HashMap<&str, usize> = HashMap::new();
+    while !current_nodes.is_empty() {
+        let instruction = instructions.next().unwrap();
         current_nodes = current_nodes
             .iter()
             .map(|x| get_next_node(x, instruction, &nodes))
             .collect();
         steps_taken += 1;
+
+        if current_nodes.iter().any(|x| x.ends_with('Z')) {
+            reached_destinations_with_step_count.insert(
+                current_nodes.iter().find(|x| x.ends_with('Z')).unwrap(),
+                steps_taken,
+            );
+
+            current_nodes.retain(|x| !x.ends_with('Z'));
+        }
     }
-    steps_taken
+
+    lcm(&reached_destinations_with_step_count.values().cloned().collect::<Vec<usize>>())
 }
 
 fn main() {
