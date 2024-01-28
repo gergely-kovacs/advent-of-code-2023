@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
+use std::iter::FromIterator;
 
 fn parse_map(input: &str) -> HashMap<&str, Vec<String>> {
     input.lines().filter(|x| !x.is_empty()).fold(
@@ -50,10 +52,39 @@ fn calculate_number_of_steps_to_reach_destination(input: &str) -> usize {
     steps_taken
 }
 
+fn calculate_number_of_steps_to_reach_destination_parallel(input: &str) -> usize {
+    let instructions = *input.split("\n\n").collect::<Vec<&str>>().first().unwrap();
+    let mut instructions_iter = instructions.chars().peekable();
+    let network = *input.split("\n\n").collect::<Vec<&str>>().last().unwrap();
+    let nodes = parse_map(network);
+    let starting_nodes: HashSet<&str> =
+        HashSet::from_iter(nodes.keys().cloned().filter(|x| x.ends_with('A')));
+    let destination_nodes: HashSet<&str> =
+        HashSet::from_iter(nodes.keys().cloned().filter(|x| x.ends_with('Z')));
+    let mut current_nodes = starting_nodes;
+    let mut steps_taken = 0;
+    while !current_nodes.eq(&destination_nodes) {
+        if instructions_iter.peek().is_none() {
+            instructions_iter = instructions.chars().peekable();
+        }
+        let instruction = instructions_iter.next().unwrap();
+        current_nodes = current_nodes
+            .iter()
+            .map(|x| get_next_node(x, instruction, &nodes))
+            .collect();
+        steps_taken += 1;
+    }
+    steps_taken
+}
+
 fn main() {
     println!(
         "{:?}",
         calculate_number_of_steps_to_reach_destination(include_str!("input.txt"))
+    );
+    println!(
+        "{:?}",
+        calculate_number_of_steps_to_reach_destination_parallel(include_str!("input.txt"))
     );
 }
 
@@ -83,5 +114,23 @@ AAA = (BBB, BBB)
 BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)";
         assert_eq!(calculate_number_of_steps_to_reach_destination(input), 6);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let input = "LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)";
+        assert_eq!(
+            calculate_number_of_steps_to_reach_destination_parallel(input),
+            6
+        );
     }
 }
