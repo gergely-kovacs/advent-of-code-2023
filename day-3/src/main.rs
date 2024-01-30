@@ -5,6 +5,16 @@ struct NumberInLine {
     end_index: usize,
 }
 
+impl Clone for NumberInLine {
+    fn clone(&self) -> Self {
+        Self {
+            number: self.number,
+            start_index: self.start_index,
+            end_index: self.end_index,
+        }
+    }
+}
+
 fn read_input_file() -> String {
     std::fs::read_to_string("input.txt").unwrap()
 }
@@ -17,43 +27,46 @@ fn get_index_of_symbol((i, c): (usize, char)) -> Option<usize> {
     }
 }
 
+fn find_numbers_in_line(line: &str) -> Vec<NumberInLine> {
+    line.trim().chars().enumerate().fold(
+        Vec::new(),
+        |mut numbers: Vec<NumberInLine>, (character_index, c)| {
+            if !c.is_ascii_digit() {
+                return numbers;
+            }
+            if numbers.is_empty() {
+                numbers.push(NumberInLine {
+                    number: c.to_digit(10).unwrap(),
+                    start_index: character_index,
+                    end_index: character_index,
+                })
+            } else {
+                let last_number = numbers.last_mut().unwrap();
+                if last_number.end_index == character_index - 1 {
+                    last_number.end_index = character_index;
+                    last_number.number = line[last_number.start_index..=last_number.end_index]
+                        .parse::<u32>()
+                        .unwrap();
+                    return numbers;
+                }
+                numbers.push(NumberInLine {
+                    number: c.to_digit(10).unwrap(),
+                    start_index: character_index,
+                    end_index: character_index,
+                })
+            }
+            numbers
+        },
+    )
+}
+
 fn sum_part_numbers(input: &str) -> u32 {
     input
         .lines()
         .filter(|line| !line.trim().is_empty())
         .enumerate()
         .filter_map(|(line_index, line)| {
-            let numbers_in_line = line.trim().chars().enumerate().fold(
-                Vec::new(),
-                |mut numbers: Vec<NumberInLine>, (character_index, c)| {
-                    if !c.is_ascii_digit() {
-                        return numbers;
-                    }
-                    if numbers.is_empty() {
-                        numbers.push(NumberInLine {
-                            number: c.to_digit(10).unwrap(),
-                            start_index: character_index,
-                            end_index: character_index,
-                        })
-                    } else {
-                        let last_number = numbers.last_mut().unwrap();
-                        if last_number.end_index == character_index - 1 {
-                            last_number.end_index = character_index;
-                            last_number.number = line
-                                [last_number.start_index..=last_number.end_index]
-                                .parse::<u32>()
-                                .unwrap();
-                            return numbers;
-                        }
-                        numbers.push(NumberInLine {
-                            number: c.to_digit(10).unwrap(),
-                            start_index: character_index,
-                            end_index: character_index,
-                        })
-                    }
-                    numbers
-                },
-            );
+            let numbers_in_line = find_numbers_in_line(line);
 
             if numbers_in_line.is_empty() {
                 return None;
@@ -119,6 +132,57 @@ fn sum_part_numbers(input: &str) -> u32 {
         .sum()
 }
 
+fn sum_gear_ratios(input: &str) -> usize {
+    input
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .enumerate()
+        .filter_map(|(line_index, line)| {
+            let asterisk_positions_in_current_line: Vec<usize> = line
+                .chars()
+                .enumerate()
+                .filter_map(|(character_index, c)| {
+                    if c == '*' {
+                        Some(character_index)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            if asterisk_positions_in_current_line.is_empty() {
+                return None;
+            }
+
+            let numbers_in_previous_line = find_numbers_in_line(
+                input
+                    .lines()
+                    .nth(line_index.checked_sub(1).unwrap_or_default())
+                    .unwrap_or_default(),
+            );
+            let numbers_in_current_line = find_numbers_in_line(line);
+            let numbers_in_next_line = find_numbers_in_line(
+                input
+                    .lines()
+                    .nth(line_index.checked_add(1).unwrap_or_default())
+                    .unwrap_or_default(),
+            );
+            let numbers = [
+                &numbers_in_previous_line[..],
+                &numbers_in_current_line[..],
+                &numbers_in_next_line[..],
+            ]
+            .concat();
+
+            // looking for numbers that are separated from other numbers by an asterisk
+            // multiply them together
+            // sum them
+
+            Some(0)
+        })
+        .sum()
+}
+
 fn main() {
     println!("Part 1: {}", sum_part_numbers(&read_input_file()));
 }
@@ -140,5 +204,20 @@ mod tests {
 ...$.*....
 .664.598..";
         assert_eq!(sum_part_numbers(input), 4361);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let input = "467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..";
+        assert_eq!(sum_gear_ratios(input), 467835);
     }
 }
