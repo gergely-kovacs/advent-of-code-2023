@@ -1,6 +1,6 @@
 #[derive(Debug)]
 struct NumberInLine {
-    number: u32,
+    number: usize,
     start_index: usize,
     end_index: usize,
 }
@@ -36,7 +36,7 @@ fn find_numbers_in_line(line: &str) -> Vec<NumberInLine> {
             }
             if numbers.is_empty() {
                 numbers.push(NumberInLine {
-                    number: c.to_digit(10).unwrap(),
+                    number: c.to_digit(10).unwrap() as usize,
                     start_index: character_index,
                     end_index: character_index,
                 })
@@ -45,12 +45,12 @@ fn find_numbers_in_line(line: &str) -> Vec<NumberInLine> {
                 if last_number.end_index == character_index - 1 {
                     last_number.end_index = character_index;
                     last_number.number = line[last_number.start_index..=last_number.end_index]
-                        .parse::<u32>()
+                        .parse::<usize>()
                         .unwrap();
                     return numbers;
                 }
                 numbers.push(NumberInLine {
-                    number: c.to_digit(10).unwrap(),
+                    number: c.to_digit(10).unwrap() as usize,
                     start_index: character_index,
                     end_index: character_index,
                 })
@@ -60,7 +60,7 @@ fn find_numbers_in_line(line: &str) -> Vec<NumberInLine> {
     )
 }
 
-fn sum_part_numbers(input: &str) -> u32 {
+fn sum_part_numbers(input: &str) -> usize {
     input
         .lines()
         .filter(|line| !line.trim().is_empty())
@@ -107,7 +107,7 @@ fn sum_part_numbers(input: &str) -> u32 {
                 return None;
             }
 
-            let final_numbers_of_line: Vec<u32> = numbers_in_line
+            let final_numbers_of_line: Vec<usize> = numbers_in_line
                 .iter()
                 .filter_map(|number_in_line| {
                     if symbol_indices.iter().any(|&symbol_index| {
@@ -127,7 +127,7 @@ fn sum_part_numbers(input: &str) -> u32 {
                 })
                 .collect();
 
-            Some(final_numbers_of_line.iter().sum::<u32>())
+            Some(final_numbers_of_line.iter().sum::<usize>())
         })
         .sum()
 }
@@ -174,17 +174,38 @@ fn sum_gear_ratios(input: &str) -> usize {
             ]
             .concat();
 
-            // looking for numbers that are separated from other numbers by an asterisk
-            // multiply them together
-            // sum them
+            if numbers.is_empty() {
+                return None;
+            }
 
-            Some(0)
+            Some(asterisk_positions_in_current_line.iter().fold(
+                0usize,
+                |sum_of_gear_ratios_in_line, asterisk_index| {
+                    let numbers_next_to_asterisk = numbers.iter().filter_map(|number| {
+                        if number.start_index.checked_sub(1).unwrap_or_default() <= *asterisk_index
+                            && *asterisk_index
+                                <= number.end_index.checked_add(1).unwrap_or_default()
+                        {
+                            Some(number.number)
+                        } else {
+                            None
+                        }
+                    });
+
+                    if numbers_next_to_asterisk.clone().count() != 2usize {
+                        return sum_of_gear_ratios_in_line;
+                    }
+
+                    sum_of_gear_ratios_in_line + numbers_next_to_asterisk.clone().product::<usize>()
+                },
+            ))
         })
         .sum()
 }
 
 fn main() {
     println!("Part 1: {}", sum_part_numbers(&read_input_file()));
+    println!("Part 2: {}", sum_gear_ratios(&read_input_file()));
 }
 
 #[cfg(test)]
